@@ -23,9 +23,17 @@
 
 
         />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="79dp"
+    android:contentDescription="Add Task"
+    app:backgroundTint="@color/teal_700"
+        android:src="@drawable/floating_add"/>
 
 
 
-   
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
