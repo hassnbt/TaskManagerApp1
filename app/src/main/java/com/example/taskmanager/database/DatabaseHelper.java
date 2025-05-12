@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import com.example.taskmanager.models.Task;
 import com.example.taskmanager.models.Notification;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
+    private static final String TAG = "DatabaseHelper";
     private static final String DATABASE_NAME = "TaskManager.db";
     private static final int DATABASE_VERSION = 1;
 
@@ -64,90 +66,114 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Task operations
     public long createTask(Task task) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(KEY_TITLE, task.getTitle());
-        values.put(KEY_DESCRIPTION, task.getDescription());
-        values.put(KEY_DATETIME, task.getDateTime());
-        values.put(KEY_STATUS, task.getStatus());
-        return db.insert(TABLE_TASKS, null, values);
+        try {
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put(KEY_TITLE, task.getTitle());
+            values.put(KEY_DESCRIPTION, task.getDescription());
+            values.put(KEY_DATETIME, task.getDateTime());
+            values.put(KEY_STATUS, task.getStatus());
+            return db.insert(TABLE_TASKS, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating task: " + e.getMessage());
+            return -1;
+        }
     }
 
     public List<Task> getUpcomingTasks() {
         List<Task> tasks = new ArrayList<>();
-        String selectQuery = "SELECT * FROM " + TABLE_TASKS + 
-                           " WHERE " + KEY_DATETIME + " > datetime('now')" +
-                           " ORDER BY " + KEY_DATETIME + " ASC";
+        try {
+            // Use strftime to compare datetime strings properly
+            String selectQuery = "SELECT * FROM " + TABLE_TASKS + 
+                               " WHERE strftime('%Y-%m-%d %H:%M', " + KEY_DATETIME + ") > strftime('%Y-%m-%d %H:%M', 'now')" +
+                               " ORDER BY strftime('%Y-%m-%d %H:%M', " + KEY_DATETIME + ") ASC";
 
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.rawQuery(selectQuery, null);
 
-        if (cursor.moveToFirst()) {
-            do {
-                Task task = new Task();
-                task.setId(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)));
-                task.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(KEY_TITLE)));
-                task.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DESCRIPTION)));
-                task.setDateTime(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATETIME)));
-                task.setStatus(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_STATUS)));
-                tasks.add(task);
-            } while (cursor.moveToNext());
+            if (cursor.moveToFirst()) {
+                do {
+                    Task task = new Task();
+                    task.setId(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)));
+                    task.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(KEY_TITLE)));
+                    task.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DESCRIPTION)));
+                    task.setDateTime(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATETIME)));
+                    task.setStatus(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_STATUS)));
+                    tasks.add(task);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting upcoming tasks: " + e.getMessage());
         }
-        cursor.close();
         return tasks;
     }
 
     public List<Task> getPastTasks() {
         List<Task> tasks = new ArrayList<>();
-        String selectQuery = "SELECT * FROM " + TABLE_TASKS + 
-                           " WHERE " + KEY_DATETIME + " <= datetime('now')" +
-                           " ORDER BY " + KEY_DATETIME + " DESC";
+        try {
+            // Use strftime to compare datetime strings properly
+            String selectQuery = "SELECT * FROM " + TABLE_TASKS + 
+                               " WHERE strftime('%Y-%m-%d %H:%M', " + KEY_DATETIME + ") <= strftime('%Y-%m-%d %H:%M', 'now')" +
+                               " ORDER BY strftime('%Y-%m-%d %H:%M', " + KEY_DATETIME + ") DESC";
 
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.rawQuery(selectQuery, null);
 
-        if (cursor.moveToFirst()) {
-            do {
-                Task task = new Task();
-                task.setId(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)));
-                task.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(KEY_TITLE)));
-                task.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DESCRIPTION)));
-                task.setDateTime(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATETIME)));
-                task.setStatus(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_STATUS)));
-                tasks.add(task);
-            } while (cursor.moveToNext());
+            if (cursor.moveToFirst()) {
+                do {
+                    Task task = new Task();
+                    task.setId(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)));
+                    task.setTitle(cursor.getString(cursor.getColumnIndexOrThrow(KEY_TITLE)));
+                    task.setDescription(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DESCRIPTION)));
+                    task.setDateTime(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATETIME)));
+                    task.setStatus(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_STATUS)));
+                    tasks.add(task);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting past tasks: " + e.getMessage());
         }
-        cursor.close();
         return tasks;
     }
 
     // Notification operations
     public long createNotification(Notification notification) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(KEY_MESSAGE, notification.getMessage());
-        values.put(KEY_DATETIME, notification.getDateTime());
-        return db.insert(TABLE_NOTIFICATIONS, null, values);
+        try {
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put(KEY_MESSAGE, notification.getMessage());
+            values.put(KEY_DATETIME, notification.getDateTime());
+            return db.insert(TABLE_NOTIFICATIONS, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating notification: " + e.getMessage());
+            return -1;
+        }
     }
 
     public List<Notification> getAllNotifications() {
         List<Notification> notifications = new ArrayList<>();
-        String selectQuery = "SELECT * FROM " + TABLE_NOTIFICATIONS + 
-                           " ORDER BY " + KEY_DATETIME + " DESC";
+        try {
+            String selectQuery = "SELECT * FROM " + TABLE_NOTIFICATIONS + 
+                               " ORDER BY strftime('%Y-%m-%d %H:%M', " + KEY_DATETIME + ") DESC";
 
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.rawQuery(selectQuery, null);
 
-        if (cursor.moveToFirst()) {
-            do {
-                Notification notification = new Notification();
-                notification.setId(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)));
-                notification.setMessage(cursor.getString(cursor.getColumnIndexOrThrow(KEY_MESSAGE)));
-                notification.setDateTime(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATETIME)));
-                notifications.add(notification);
-            } while (cursor.moveToNext());
+            if (cursor.moveToFirst()) {
+                do {
+                    Notification notification = new Notification();
+                    notification.setId(cursor.getInt(cursor.getColumnIndexOrThrow(KEY_ID)));
+                    notification.setMessage(cursor.getString(cursor.getColumnIndexOrThrow(KEY_MESSAGE)));
+                    notification.setDateTime(cursor.getString(cursor.getColumnIndexOrThrow(KEY_DATETIME)));
+                    notifications.add(notification);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting notifications: " + e.getMessage());
         }
-        cursor.close();
         return notifications;
     }
 } 
